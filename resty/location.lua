@@ -88,7 +88,7 @@ function _M:capture_multi(params, use_http)
     end
 
     local resps = {}
-    if use_http then
+    if use_http or ngx_phase() == "timer" then
         local thds = threads:new()
         for _, param in ipairs(params) do
             local options = param[3] or {}
@@ -112,10 +112,6 @@ function _M:capture_multi(params, use_http)
             resps[i] = _build_resp(res, err, params[i][3])
         end
     else
-        if ngx_phase() == "timer" then
-            error("ngx capture cannot use in timer")
-        end
-
         local captures = {}
         for _, param in ipairs(params) do
             table.insert(captures, {param[1].prefix .. param[2], param[3]})
@@ -157,6 +153,9 @@ function _M:capture(uri, options)
 
         -- headers
         params.headers = options.headers
+        if ngx_phase() ~= "timer" and not params.headers then
+            params.headers = ngx_get_headers()
+        end
 
         -- body
         params.body = options.body
