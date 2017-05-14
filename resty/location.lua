@@ -93,7 +93,7 @@ function _M:capture_multi(params, use_http)
         for _, param in ipairs(params) do
             local options = param[3] or {}
             options.use_http = true
-            if ngx_phase() ~= "timer" then
+            if ngx_phase() ~= "timer" and not options.headers then
                 options.headers = ngx_get_headers()
             end
 
@@ -153,7 +153,7 @@ function _M:capture(uri, options)
 
         -- headers
         params.headers = options.headers
-        if ngx_phase() ~= "timer" and not params.headers then
+        if ngx_phase() ~= "timer" and not options.headers then
             params.headers = ngx_get_headers()
         end
 
