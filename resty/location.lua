@@ -208,6 +208,7 @@ end
 function _M:proxy()
     return self:capture(ngx.var.echo_request_uri, {
         method = method_str2num[ngx.var.echo_request_method],
+        args = ngx.var.args,
         always_forward_body = true
     })
 end
