@@ -137,9 +137,8 @@ function _M:capture(uri, options)
 
     local res, err
     options = options or {}
-    local body = options.body
-    if type(body) == "table" then
-        body = cjson_encode(options.body)
+    if type(options.body) == "table" then
+        options.body = cjson_encode(options.body)
     end
 
     if options.use_http or ngx_phase() == "timer" then
@@ -160,7 +159,7 @@ function _M:capture(uri, options)
         params.headers = options.headers
 
         -- body
-        params.body = body
+        params.body = options.body
 
         -- ssl_verify
         params.ssl_verify = options.ssl_verify
