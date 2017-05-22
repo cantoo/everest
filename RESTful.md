@@ -12,69 +12,54 @@ RESTful是目前流行的API接口形式，无论哪个搜索引擎都会告诉�
 
 * 查询好友动态
 ```
-GET /tweets
+    GET /tweets
 ```
 
 * 查询某个动态的详情
 ```
-GET /tweets/{tweetid}
+    GET /tweets/{tweetid}
 ```
 
 * 发表一个动态
 ```
-POST /tweets
-{
-    "text"："RESTful大法好"
-}
+    POST /tweets
+    {
+        "text"："RESTful大法好"
+    }
 ```
 
 * 删除我的动态
 ```
-DELETE /tweets/{tweetid}
+    DELETE /tweets/{tweetid}
 ```
 
 * 查询某个人的动态
 ```
-GET /users/{userid}/tweets
+    GET /users/{userid}/tweets
 ```
 
 * 点赞
 ```
-POST /tweets/{tweetid}/thumb
+    POST /tweets/{tweetid}/thumb
 ```
 
 如果你的接口在请求部分做到了上述的接口形式，那你的接口已经达到了Martin Fowler在文章[《steps toward the glory of REST》](https://martinfowler.com/articles/richardsonMaturityModel.html)中定义的level 2。然而最高level是level 3，level 3比level 2多了hybermedia信息，hybermedia是指接口的返回中携带了资源下一步操作的接口信息，如查询好友动态列表接口，返回的每个动态对象中都有属性指定查详情和点赞使用什么接口，并且返回了查询下一页动态应该使用什么接口：
 ```
-GET /tweets
-
-{
-    "tweets"[{
-        "user": { "name": "tom", "uid": "abc" },
-        "text": "RESTful大法好",
-        "links": [{
-            "rel": "detail",
-            "method": "GET",
-            "uri": "/tweets/123456"
-        }]
-    }, {
-        "user": { "name": "lily", "uid": "xyz" },
-        "text": "hybermedia大法好",
-        "links": [{
-            "rel": "detail",
-            "method": "GET",
-            "uri": "/tweets/456789"
-        },{
-            "rel": "thumb",
-            "method": "POST",
-            "uri": "/tweets/456789/thumb"
-        }]
-    }],
-    "links": [{
-        "rel": "next",
-        "method": "GET",
-        "uri": "/tweets?ctime=1495008478"
-    }]
-}
+    GET /tweets
+    
+    {
+        "tweets"[{
+            "user": { "name": "tom", "uid": "abc" },
+            "text": "RESTful大法好",
+            "links": [{ "rel": "detail", "method": "GET", "uri": "/tweets/123456"}]
+        }, {
+            "user": { "name": "lily", "uid": "xyz" },
+            "text": "hybermedia大法好",
+            "links": [{"rel": "detail", "method": "GET", "uri": "/tweets/456789"},
+                {"rel": "thumb", "method": "POST", "uri": "/tweets/456789/thumb"}]
+        }],
+        "links": [{"rel": "next", "method": "GET", "uri": "/tweets?ctime=1495008478"}]
+    }
 ```
 
 hybermedia信息可以是接口层面的，也可以是每个数据对象层面的。一般做法是把所有hybermedia放在一个`links`数组中，数组每个元素有`rel`和`uri`属性，`rel`指定操作类型，`uri`指定接口。有了hybermedia，你的RESTful接口可以形成接口协议地图，如本文讨论的类微博功能的部分协议地图如下：
@@ -122,12 +107,12 @@ hybermedia信息可以是接口层面的，也可以是每个数据对象层面�
 
 ## RESTful接口规范
 网上的RESTful规范有很多，比较靠谱的有：
-    [Best Practices for Designing a Pragmatic RESTful API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api)
-    [Principles of good RESTful API Design](https://codeplanet.io/principles-good-restful-api-design/)
+[Best Practices for Designing a Pragmatic RESTful API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api)
+[Principles of good RESTful API Design](https://codeplanet.io/principles-good-restful-api-design/)
 
 比较规范的示例有：
-    [Coinbase](https://developers.coinbase.com/api/v2)
-    [Enchant REST API](http://dev.enchant.com/api/v1)
+[Coinbase](https://developers.coinbase.com/api/v2)
+[Enchant REST API](http://dev.enchant.com/api/v1)
 
 RESTful规范像代码规范一样，若要分出个好坏来，那非得打起来不可，所以只要整个项目风格统一，所有人都遵守就可以了。
 
@@ -154,13 +139,34 @@ RESTful规范像代码规范一样，若要分出个好坏来，那非得打起�
 
 
 ## 架构
-RESTful的核心思想是将数据划分为一个个资源，这和微服务架构的思想是一致的。Chris Richardson & Floyd Smith共同编写的7篇介绍微服务系列雄文[《Microservices: From Design to Deployment》](https://www.nginx.com/blog/introduction-to-microservices/)中就推荐使用RESTful作为接口形式。本文讨论的需求背景，后台的微服务架构为：
+RESTful的核心思想是将数据划分为一个个资源，这和微服务架构的思想是一致的。Chris Richardson的7篇介绍微服务系列雄文[《Microservices: From Design to Deployment》](https://www.nginx.com/blog/introduction-to-microservices/)中就推荐使用RESTful作为接口形式。本文讨论的需求背景，后台的微服务架构为：
 ```
-
-
-
-                            
+    +--------+        +-------------+
+    |        |<------>|    users    |
+    |        |        +-------------+
+    |        |                       
+    |        |                       
+    |   API  |        +-------------+
+    |        |<------>|    rela     |
+    | Gateway|        +-------------+
+    |        |                       
+    |        |                       
+    |        |        +-------------+
+    |        |<------>|    tweets   |
+    +--------+        +-------------+
 ```
+这里我们定义了3个微服务，`user`服务负责维护用户的个人信息；`rela`负责维护关系链数据；`tweet`负责维护动态数据。Chris Richardson在文章[Building Microservices: Using an API Gateway](https://www.nginx.com/blog/building-microservices-using-an-api-gateway/)中描述的`API Gateway`的职责是：
+* 为前端提供统一入口，路由请求
+* 协议转换
+* 数据整合
+
+数据整合的意思是`API Gateway`应该整合后端多个服务的数据一并返回给前端，以减少客户端调用次数，如查询好友动态接口，不仅要返回动态的数据，还需要返回动态发表人的数据，而这两块数据分别由`users`服务和`tweets`服务维护。
+
+### 进程间通讯
+
+
+单体 & 微服务
+监控
 
 
 ## 结语
