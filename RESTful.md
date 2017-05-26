@@ -90,17 +90,17 @@ hybermedia信息可以是接口层面的，也可以是每个数据对象层面�
 
 * 纵深结构，按多级资源组织文件
 
-    |接口|url|文件目录|
-    |--|--|--|
-    |查询好友动态|`GET /tweets`|`/your/root/tweets/get.cgi`|
-    |查询某人的动态|`GET /users/{uid}/tweets`|`/your/root/users/tweets/get.cgi`|
+|接口|url|文件目录|
+|-----|-----|-----|
+|查询好友动态|`GET /tweets`|`/your/root/tweets/get.cgi`|
+|查询某人的动态|`GET /users/{uid}/tweets`|`/your/root/users/tweets/get.cgi`|
 
 * 扁平结构，所有文件放在一级资源下
 
-    |接口|url|文件目录|
-    |--|--|--|
-    |查询好友动态|`GET /tweets`|`/your/root/tweets/get_tweets.cgi`|
-    |查询某人的动态|`GET /users/{uid}/tweets`|`/your/root/users/get_users_tweets.cgi`|
+|接口|url|文件目录|
+|-----|-----|-----|
+|查询好友动态|`GET /tweets`|`/your/root/tweets/get_tweets.cgi`|
+|查询某人的动态|`GET /users/{uid}/tweets`|`/your/root/users/get_users_tweets.cgi`|
 
 纵深结构比扁平结构目录层次更清晰，避免了一个目录下有大量的文件；扁平结构比纵深结构调试起来更方便，重名文件少，文件名本身的语义更清晰。
 
@@ -242,20 +242,6 @@ RESTful监控和普通Web服务的监控并无二致。我们项目使用ELK来�
 
 ## 结语
 终上所述，我们在讨论RESTful时，不只是在讨论一个接口形式，而是在讨论如何使接口语义更清楚，后台的控制力更强，工程目录结构更清晰，架构更优化等等问题。当我们把这些问题都搞清楚时，会发现RESTful带给我们超过其本意的好处。
-
-
-**广告时间**
-
-TORF框架是公司内第一个使用OpenResty实现完整RESTful语义的框架（说公司内外也不过分）。除了对RESTful的支持，TORF还提供了一些好玩的东西，如：
-
-* `API Gateway`内部经常需要批量并发的调用微服务，你可以TORF里面找到很精炼的实现；
-* 公司内部L5，门神，tlog等服务的整合；
-* QQ & 微信 账号体系的集成；
-* 腾讯云IM，云搜，天御等服务封装；
-* 从入口到精通系列文档支持；
-
-[欢迎猛戳](http://pub.code.oa.com/project/home?projectName=NLF)
-
 
 
 
