@@ -34,6 +34,8 @@
 +---------------------------------------------------------------------------------+
 ]]--
 
+local cjson = require("cjson.safe")
+
 local parse_http_time = ngx.parse_http_time
 local http_time = ngx.http_time
 
@@ -127,5 +129,33 @@ function _M:internal_server_error(err, errcode)
         ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
 
+function _M:say(res)
+    if type(res) ~= "table" then
+        ngx.exit(ngx.INTERNAL_SERVER_ERROR)
+        return
+    end
+
+    local default_status = {
+        ["GET"]     = 200,
+        ["PUT"]     = 201,
+        ["POST"]    = 201,
+        ["DELETE"]  = 204,
+    }
+
+    ngx.status = res.status or default_status[ngx.var.echo_request_method]
+    if type(res.body) == "table" then
+        cjson.encode_empty_table_as_object(false)
+        local body = cjson.encode(res.body)
+        ngx.header["Content-Type"] = "application/json; charset=utf-8"
+        ngx.header["Content-Length"] = #body + 1
+        ngx.say(body)
+    elseif res.body then
+        local body = tostring(res.body)
+        ngx.header["Content-Length"] = #body
+        ngx.print(body)
+    end
+
+    ngx.eof()
+end
 
 return _M
