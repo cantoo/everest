@@ -22,6 +22,10 @@ function _M:hash(str)
     return ret
 end
 
+function _M:from_hex(hex)
+    return string.gsub(hex, "%x%x", function(c) return string.char(tonumber(c, 16)) end)
+end
+
 return _M
 
 
