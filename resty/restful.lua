@@ -129,6 +129,25 @@ function _M:internal_server_error(err, errcode)
         ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
 
+function _M:get_body_data()
+    local body = ngx.req.get_body_data()
+    if not body then
+        return nil
+    end
+
+    return cjson.decode(body)
+end
+
+function _M:add_hypermedia(res, rel, uri, method)
+    if type(res) ~= "table" then
+        return
+    end
+
+    res.links = res.links or {}
+    table.insert(res.links, {rel = rel, uri = uri, method = method or "GET"})
+    return
+end
+
 function _M:say(res)
     if type(res) ~= "table" then
         ngx.exit(ngx.INTERNAL_SERVER_ERROR)

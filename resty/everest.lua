@@ -1,4 +1,4 @@
-local restful = require("restful")
+local restful = require("resty.restful")
 
 local table_concat = table.concat
 local ngx_exit = ngx.exit

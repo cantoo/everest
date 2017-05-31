@@ -1,6 +1,6 @@
 local http = require("resty.http")
 local cjson = require("cjson.safe")
-local threads = require("threads")
+local threads = require("resty.threads")
 
 local cjson_decode = cjson.decode
 local cjson_encode = cjson.encode
