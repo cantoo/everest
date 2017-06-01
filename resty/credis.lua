@@ -1,5 +1,5 @@
 local redis = require("resty.redis")
-
+local cjson = require("cjson.safe")
 
 local _M = {}
 
@@ -74,6 +74,7 @@ function _M:do_cmd(cmd, ...)
         return nil, err
     end
 
+    ngx.log(ngx.DEBUG, "cmd=", cmd, ",res=", cjson.encode(res))
     self:set_keepalive(red)
     return res
 end
@@ -110,6 +111,7 @@ function _M:pipeline(cmds)
     --     end
     -- end
     
+    ngx.log(ngx.DEBUG, "cmds=", cmds, ",results=", cjson.encode(results))
     self:set_keepalive(red)
     return results
 end
