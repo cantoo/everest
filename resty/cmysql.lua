@@ -63,8 +63,8 @@ function _M:query_db(db, sql, nrows)
         ngx.log(ngx.ERR, "bad result: ", err, ": ", errcode, ": ", sqlstate, ",sql=", sql)
         return nil, err, errcode
     end
-    
-    ngx.log(ngx.DEBUG, sql)
+
+    ngx.log(ngx.DEBUG, "sql=", sql, ",res=", res)
     return res
 end
 
