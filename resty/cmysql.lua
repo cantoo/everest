@@ -1,5 +1,4 @@
 local mysql = require("resty.mysql")
-local cjson = require("cjson.safe")
 
 local ngx_re_sub = ngx.re.sub
 
@@ -65,7 +64,7 @@ function _M:query_db(db, sql, nrows)
         return nil, err, errcode
     end
 
-    ngx.log(ngx.DEBUG, "sql=", sql, ",res=", cjson.encode(res))
+    ngx.log(ngx.DEBUG, sql)
     return res
 end
 
