@@ -28,11 +28,10 @@ local _M = {}
 
 local mt = { __index = _M }
 
-local function _build_resp(res, err, options)
+local function _build_resp(res, err)
     res = res or {}
-    options = options or {}
 
-    if res.body and not options.donot_decode then
+    if res.body then
         if res.body == "" then
             res.body = nil
         else
@@ -46,13 +45,13 @@ local function _build_resp(res, err, options)
     end
 
     local resp = { body = res.body, header = res.header, status = res.status }
-    if err then
-        resp.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-        resp.err = err
-    elseif type(res.status) == "number" and res.status >= 400 then
+    if type(res.status) == "number" and res.status >= 400 then
         resp.err = "status " .. res.status
     elseif res.truncated then
         resp.err = "body truncated"
+    elseif err then
+        resp.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+        resp.err = err
     end
 
     return resp
@@ -91,35 +90,43 @@ function _M:capture_multi(params, use_http)
     if use_http or ngx_phase() == "timer" then
         local thds = threads:new()
         for _, param in ipairs(params) do
-            local options = param[3] or {}
-            options.use_http = true
-            if ngx_phase() ~= "timer" and not options.headers then
-                options.headers = ngx_get_headers()
+            param[3] = param[3] or {}
+            param[3].use_http = true
+            if ngx_phase() ~= "timer" and not param[3].headers then
+                param[3].headers = ngx_get_headers()
             end
 
-            thds:spawn(param[1].capture, param[1], param[2], options)
+            thds:spawn(param[1].capture, param[1], param[2], param[3])
         end
 
         local results = thds:wait()
         for i, result in ipairs(results) do
-            local err
             local ok, res = result[1], result[2]
             if not ok then
-                err = "thread exception " .. res
-                res = nil
+                local err = "thread exception " .. res
+                resps[i] = _build_resp(nil, err)
+                ngx.log(ngx.ERR, "fail to capture,uri=", params[i][2], ",err=", err)
+            else
+                resps[i] = res
             end
-
-            resps[i] = _build_resp(res, err, params[i][3])
         end
     else
         local captures = {}
         for _, param in ipairs(params) do
+            param[3] = param[3] or {}
+            if type(param[3].body) == "table" then
+                param[3].body = cjson_encode(param[3].body)
+            end
+
             table.insert(captures, {param[1].prefix .. param[2], param[3]})
         end
 
         local results = { ngx_capture_multi(captures) }
         for i, res in ipairs(results) do
-            resps[i] = _build_resp(res, nil, params[i][3])
+            resps[i] = _build_resp(res, nil)
+            if resps[i].err then
+                ngx.log(ngx.ERR, "failed to capture,uri=", params[i][2], ",status=", resps[i].status, ",err=", resps[i].err, ",req body=", params[i][3].body)
+            end
         end
     end
 
@@ -178,7 +185,12 @@ function _M:capture(uri, options)
         res = ngx_capture(self.prefix .. uri, options)
     end
 
-    return _build_resp(res, err, options)
+    local resp = _build_resp(res, err)
+    if resp.err then
+        ngx.log(ngx.ERR, "failed to capture,uri=", uri, ",status=", resp.status, ",err=", resp.err, ",req body=", options.body)
+    end
+
+    return resp
 end
 
 function _M:get(uri, options)
