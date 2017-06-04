@@ -26,6 +26,11 @@ function _M:from_hex(hex)
     return string.gsub(hex, "%x%x", function(c) return string.char(tonumber(c, 16)) end)
 end
 
+function _M:get_day_begin(day)
+    day = day or ngx.time()
+    return (day - (day - 57600) % 86400)
+end
+
 return _M
 
 

@@ -149,11 +149,6 @@ function _M:add_hypermedia(res, rel, uri, method)
 end
 
 function _M:say(res)
-    if type(res) ~= "table" then
-        ngx.exit(ngx.INTERNAL_SERVER_ERROR)
-        return
-    end
-
     local default_status = {
         ["GET"]     = 200,
         ["PUT"]     = 201,
@@ -161,6 +156,7 @@ function _M:say(res)
         ["DELETE"]  = 204,
     }
 
+    res = res or {}
     ngx.status = res.status or default_status[ngx.var.echo_request_method]
     if type(res.body) == "table" then
         cjson.encode_empty_table_as_object(false)
