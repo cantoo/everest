@@ -15,7 +15,7 @@ end
 
 function _M:spawn(func, ...)
     if type(func) ~= "function" then
-        error("only can spwan function")
+        error("only can spawn function")
     end
 
     table.insert(self.threads, ngx_spawn(func, ...))
