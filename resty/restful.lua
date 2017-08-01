@@ -80,53 +80,43 @@ function _M:not_modified()
 end
 
 function _M:bad_request(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.BAD_REQUEST)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.BAD_REQUEST)
 end
 
 function _M:unauthorized(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.HTTP_UNAUTHORIZED)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_UNAUTHORIZED)
 end
 
 function _M:forbidden(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.HTTP_FORBIDDEN)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_FORBIDDEN)
 end
 
 function _M:not_found(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.HTTP_NOT_FOUND)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_NOT_FOUND)
 end
 
 function _M:method_not_allowed(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.HTTP_METHOD_NOT_ALLOWED)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_METHOD_NOT_ALLOWED)
 end
 
 function _M:gone(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.HTTP_GONE)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_GONE)
 end
 
 function _M:unprocessable_entity(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        422)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 422)
 end
 
 function _M:locked(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        423)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 423)
 end
 
 function _M:too_many_requests(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.HTTP_TOO_MANY_REQUESTS)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_TOO_MANY_REQUESTS)
 end
 
 function _M:internal_server_error(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 
-        ngx.HTTP_INTERNAL_SERVER_ERROR)
+    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
 
 function _M:get_body_data()
@@ -143,8 +133,15 @@ function _M:add_hypermedia(res, rel, uri, method)
         return
     end
 
+    local default_method = {
+        ["detail"] = "GET",
+        ["previous"] = "GET",
+        ["next"] = "GET",
+        ["delete"] = "DELETE",
+    }
+
     res.links = res.links or {}
-    table.insert(res.links, {rel = rel, uri = uri, method = method or "GET"})
+    table.insert(res.links, {rel = rel, uri = uri, method = method or default_method[rel] or "GET"})
     return
 end
 

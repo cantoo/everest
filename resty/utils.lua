@@ -1,4 +1,5 @@
 local resty_string = require("resty.string")
+local resty_md5 = require("resty.md5")
 
 local _M = {}
 
@@ -29,6 +30,23 @@ end
 function _M:get_day_begin(day)
     day = day or ngx.time()
     return (day - (day - 57600) % 86400)
+end
+
+function _M:md5sum(...)
+    local args = { ... }
+
+    local md5 = resty_md5:new()
+    if not md5 then
+        return nil, "failed to create md5 object"
+    end
+
+    local ok = md5:update(table.concat(args))
+    if not ok then
+        return nil, "failed to add data"
+    end
+
+    local digest = md5:final()
+    return resty_string.to_hex(digest)
 end
 
 return _M

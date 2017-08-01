@@ -74,7 +74,7 @@ function _M:do_cmd(cmd, ...)
         return nil, err
     end
 
-    ngx.log(ngx.DEBUG, "cmd=", cmd, ",res=", cjson.encode(res))
+    ngx.log(ngx.DEBUG, "cmd=", cmd, ",args=", cjson.encode(args), ",res=", cjson.encode(res))
     self:set_keepalive(red)
     return res
 end
