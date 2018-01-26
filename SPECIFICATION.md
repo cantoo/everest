@@ -1,7 +1,7 @@
 # RESTful接口规范
 
 ## 前缀&文档
-http://campusx.qq.com/api/{version}
+http://xxxx.xx.com/api/{version}
 
 ## 头部
 | key | value | description |
