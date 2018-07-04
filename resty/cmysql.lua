@@ -2,11 +2,6 @@ local mysql = require("resty.mysql")
 
 local ngx_re_sub = ngx.re.sub
 
-local _M = {
-    NOT_FOUND = 3,
-    NO_AFFECTED = 4,
-}
-
 local mt = { __index = _M }
 
 
@@ -91,7 +86,7 @@ function _M:get(sql)
         return res[1]
     end
 
-    return nil, "not found", _M.NOT_FOUND
+    return nil, "not found"
 end
 
 -- 查询多条记录
@@ -147,7 +142,7 @@ function _M:execute(sql)
     self:set_keepalive(db)
     if type(res.affected_rows) ~= "number" or res.affected_rows == 0 then
         ngx.log(ngx.ERR, "no affected,sql=", sql)
-        return nil, "no affected", _M.NO_AFFECTED
+        return nil, "no affected"
     end
 
     return res
