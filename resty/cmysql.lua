@@ -2,6 +2,7 @@ local mysql = require("resty.mysql")
 
 local ngx_re_sub = ngx.re.sub
 
+local _M = {}
 local mt = { __index = _M }
 
 
