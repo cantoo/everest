@@ -79,44 +79,44 @@ function _M:not_modified()
     return _M:wrap(nil, ngx.HTTP_NOT_MODIFIED)
 end
 
-function _M:bad_request(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.BAD_REQUEST)
+function _M:bad_request(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.BAD_REQUEST)
 end
 
-function _M:unauthorized(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_UNAUTHORIZED)
+function _M:unauthorized(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_UNAUTHORIZED)
 end
 
-function _M:forbidden(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_FORBIDDEN)
+function _M:forbidden(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_FORBIDDEN)
 end
 
-function _M:not_found(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_NOT_FOUND)
+function _M:not_found(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_NOT_FOUND)
 end
 
-function _M:method_not_allowed(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_METHOD_NOT_ALLOWED)
+function _M:method_not_allowed(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_METHOD_NOT_ALLOWED)
 end
 
-function _M:gone(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_GONE)
+function _M:gone(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_GONE)
 end
 
-function _M:unprocessable_entity(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 422)
+function _M:unprocessable_entity(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 422)
 end
 
-function _M:locked(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, 423)
+function _M:locked(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 423)
 end
 
-function _M:too_many_requests(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_TOO_MANY_REQUESTS)
+function _M:too_many_requests(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_TOO_MANY_REQUESTS)
 end
 
-function _M:internal_server_error(err, errcode)
-    return _M:wrap((err or errcode) and {err = err, errcode = errcode}, ngx.HTTP_INTERNAL_SERVER_ERROR)
+function _M:internal_server_error(errmsg, errcode)
+    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
 
 function _M:get_body_data()
