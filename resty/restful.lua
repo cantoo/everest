@@ -164,7 +164,7 @@ function _M:say(res)
 
     res = res or {}
     ngx.status = res.status or default_status[ngx.var.echo_request_method]
-    for head, value in pairs(res.header) do 
+    for head, value in pairs(res.header or {}) do 
         ngx.header[head] = value
     end
 
