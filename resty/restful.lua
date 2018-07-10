@@ -164,6 +164,10 @@ function _M:say(res)
 
     res = res or {}
     ngx.status = res.status or default_status[ngx.var.echo_request_method]
+    for head, value in pairs(res.header) do 
+        ngx.header[head] = value
+    end
+
     if type(res.body) == "table" then
         cjson.encode_empty_table_as_object(false)
         local body = cjson.encode(res.body)
