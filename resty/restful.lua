@@ -79,43 +79,43 @@ function _M:not_modified()
     return _M:wrap(nil, ngx.HTTP_NOT_MODIFIED)
 end
 
-function _M:bad_request(errmsg, errcode)
+function _M:bad_request(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.BAD_REQUEST)
 end
 
-function _M:unauthorized(errmsg, errcode)
+function _M:unauthorized(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_UNAUTHORIZED)
 end
 
-function _M:forbidden(errmsg, errcode)
+function _M:forbidden(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_FORBIDDEN)
 end
 
-function _M:not_found(errmsg, errcode)
+function _M:not_found(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_NOT_FOUND)
 end
 
-function _M:method_not_allowed(errmsg, errcode)
+function _M:method_not_allowed(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_METHOD_NOT_ALLOWED)
 end
 
-function _M:gone(errmsg, errcode)
+function _M:gone(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_GONE)
 end
 
-function _M:unprocessable_entity(errmsg, errcode)
+function _M:unprocessable_entity(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 422)
 end
 
-function _M:locked(errmsg, errcode)
+function _M:locked(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 423)
 end
 
-function _M:too_many_requests(errmsg, errcode)
+function _M:too_many_requests(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_TOO_MANY_REQUESTS)
 end
 
-function _M:internal_server_error(errmsg, errcode)
+function _M:internal_server_error(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
 
@@ -163,6 +163,7 @@ function _M:say(res)
         ngx.say(body)
     elseif res.body then
         local body = tostring(res.body)
+        ngx.header["Content-Type"] = "text/plain; charset=utf-8"
         ngx.header["Content-Length"] = #body
         ngx.print(body)
     end
