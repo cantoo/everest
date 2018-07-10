@@ -79,6 +79,15 @@ function _M:not_modified()
     return _M:wrap(nil, ngx.HTTP_NOT_MODIFIED)
 end
 
+function _M:temporary_redirect(uri)
+    local res = _M:wrap(nil, ngx.HTTP_TEMPORARY_REDIRECT)
+    if type(uri) == "string" and #uri > 0 then
+        res.header = { ["Location"] = uri }
+    end
+
+    return res
+end
+
 function _M:bad_request(errcode, errmsg)
     return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.BAD_REQUEST)
 end
