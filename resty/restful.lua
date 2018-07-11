@@ -176,7 +176,6 @@ function _M:say(res)
         ngx.say(body)
     elseif res.body then
         local body = tostring(res.body)
-        ngx.header["Content-Type"] = "text/plain; charset=utf-8"
         ngx.header["Content-Length"] = #body
         ngx.print(body)
     end
