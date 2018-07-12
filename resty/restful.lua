@@ -154,6 +154,14 @@ function _M:add_hypermedia(res, rel, uri, method)
     return
 end
 
+function _M:success(res)
+    if type(res) == "table" and type(res.status) == "number" and res.status >= 200 and res.status < 400 then
+        return true
+    end
+    
+    return false
+end
+
 function _M:say(res)
     local default_status = {
         ["GET"]     = 200,
