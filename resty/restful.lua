@@ -49,7 +49,7 @@ end
 function _M:ok(body, last_modified)
     local res = _M:wrap(body, ngx.HTTP_OK)
     if type(last_modified) == "number" then
-        res.header = { ["Last-Modified"] = http_time(last_modified) }
+        ngx.header["Last-Modified"] = http_time(last_modified)
     end
 
     return res
@@ -82,7 +82,7 @@ end
 function _M:temporary_redirect(uri)
     local res = _M:wrap(nil, ngx.HTTP_TEMPORARY_REDIRECT)
     if type(uri) == "string" and #uri > 0 then
-        res.header = { ["Location"] = uri }
+        ngx.header["Location"] = uri 
     end
 
     return res
@@ -172,10 +172,6 @@ function _M:say(res)
 
     res = res or {}
     ngx.status = res.status or default_status[ngx.var.echo_request_method]
-    for head, value in pairs(res.header or {}) do 
-        ngx.header[head] = value
-    end
-
     if type(res.body) == "table" then
         cjson.encode_empty_table_as_object(false)
         local body = cjson.encode(res.body)
