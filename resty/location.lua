@@ -9,11 +9,11 @@ local ngx_phase = ngx.get_phase
 local _M = {}
 local mt = { __index = _M }
 
-function _M:new(prefix)
+function _M.new(prefix)
     return setmetatable({prefix = prefix}, mt)
 end
 
-function _M:subrequest(uri, options)
+function _M.subrequest(uri, options)
     if type(options) == "table" and type(options.body) == "table" then
         options.body = cjson_encode(body)
     end
@@ -26,7 +26,7 @@ function _M:subrequest(uri, options)
     return res
 end
 
-function _M:httprequest(uri, options)
+function _M.httprequest(uri, options)
     if type(options) == "table" then
         if type(options.method) == "number" then
             local method_num2str = {
@@ -69,40 +69,40 @@ function _M:httprequest(uri, options)
     return res
 end
 
-function _M:capture(uri, options)
+function _M.capture(uri, options)
     if ngx_phase() == "timer" then
-        return _M:httprequest(uri, options)
+        return _M.httprequest(uri, options)
     end
 
-    return _M:subrequest(uri, options)
+    return _M.subrequest(uri, options)
 end
 
 function _M:get(uri, options)
     options = options or {}
     options.method = ngx.HTTP_GET
-    return _M:capture(self.prefix .. uri, options)
+    return _M.capture(self.prefix .. uri, options)
 end
 
 function _M:put(uri, options)
     options = options or {}
     options.method = ngx.HTTP_PUT
-    return _M:capture(self.prefix .. uri, options)
+    return _M.capture(self.prefix .. uri, options)
 end
 
 function _M:post(uri, options)
     options = options or {}
     options.method = ngx.HTTP_POST
-    return _M:capture(self.prefix .. uri, options)
+    return _M.capture(self.prefix .. uri, options)
 end
 
 function _M:delete(uri, options)
     options = options or {}
     options.method = ngx.HTTP_DELETE
-    return _M:capture(self.prefix .. uri, options)
+    return _M.capture(self.prefix .. uri, options)
 end
 
 function _M:proxy()
-    return _M:subrequest(self.prefix .. ngx.var.echo_request_uri, {
+    return _M.subrequest(self.prefix .. ngx.var.echo_request_uri, {
         method = ngx.var.echo_request_method,
         args = ngx.var.args,
         always_forward_body = true,

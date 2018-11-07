@@ -1,9 +1,10 @@
 local resty_string = require("resty.string")
+local resty_random = require("resty.random")
 local resty_md5 = require("resty.md5")
 
 local _M = {}
 
-function _M:hash(str)
+function _M.hash(str)
     if type(str) == "number" then
         return str
     end
@@ -23,16 +24,16 @@ function _M:hash(str)
     return ret
 end
 
-function _M:from_hex(hex)
+function _M.from_hex(hex)
     return string.gsub(hex, "%x%x", function(c) return string.char(tonumber(c, 16)) end)
 end
 
-function _M:get_day_begin(day)
+function _M.get_day_begin(day)
     day = day or ngx.time()
     return (day - (day - 57600) % 86400)
 end
 
-function _M:md5sum(...)
+function _M.md5sum(...)
     local args = { ... }
 
     local md5 = resty_md5:new()
@@ -47,6 +48,10 @@ function _M:md5sum(...)
 
     local digest = md5:final()
     return resty_string.to_hex(digest)
+end
+
+function _M.random(bytes)
+    return tonumber(resty_string.to_hex(resty_random.bytes(bytes, true)), 16)
 end
 
 return _M

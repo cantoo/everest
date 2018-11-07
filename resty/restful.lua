@@ -42,12 +42,12 @@ local http_time = ngx.http_time
 local _M = {}
 
 
-function _M:wrap(body, status)
+function _M.wrap(body, status)
     return { body = body, status = status }
 end
 
-function _M:ok(body, last_modified)
-    local res = _M:wrap(body, ngx.HTTP_OK)
+function _M.ok(body, last_modified)
+    local res = _M.wrap(body, ngx.HTTP_OK)
     if type(last_modified) == "number" then
         ngx.header["Last-Modified"] = http_time(last_modified)
     end
@@ -55,19 +55,19 @@ function _M:ok(body, last_modified)
     return res
 end
 
-function _M:accepted(body)
-    return _M:wrap(body, ngx.HTTP_ACCEPTED)
+function _M.accepted(body)
+    return _M.wrap(body, ngx.HTTP_ACCEPTED)
 end
 
-function _M:created(body)
-    return _M:wrap(body, ngx.HTTP_CREATED)
+function _M.created(body)
+    return _M.wrap(body, ngx.HTTP_CREATED)
 end
 
-function _M:no_content()
-    return _M:wrap(nil, ngx.HTTP_NO_CONTENT )
+function _M.no_content()
+    return _M.wrap(nil, ngx.HTTP_NO_CONTENT )
 end
 
-function _M:if_modified_since()
+function _M.if_modified_since()
     if not ngx.http_if_modified_since then
         return nil
     end
@@ -75,12 +75,12 @@ function _M:if_modified_since()
     return parse_http_time(ngx.http_if_modified_since)
 end
 
-function _M:not_modified()
-    return _M:wrap(nil, ngx.HTTP_NOT_MODIFIED)
+function _M.not_modified()
+    return _M.wrap(nil, ngx.HTTP_NOT_MODIFIED)
 end
 
-function _M:temporary_redirect(uri)
-    local res = _M:wrap(nil, ngx.HTTP_TEMPORARY_REDIRECT)
+function _M.temporary_redirect(uri)
+    local res = _M.wrap(nil, ngx.HTTP_TEMPORARY_REDIRECT)
     if type(uri) == "string" and #uri > 0 then
         ngx.header["Location"] = uri 
     end
@@ -88,47 +88,47 @@ function _M:temporary_redirect(uri)
     return res
 end
 
-function _M:bad_request(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.BAD_REQUEST)
+function _M.bad_request(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.BAD_REQUEST)
 end
 
-function _M:unauthorized(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_UNAUTHORIZED)
+function _M.unauthorized(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_UNAUTHORIZED)
 end
 
-function _M:forbidden(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_FORBIDDEN)
+function _M.forbidden(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_FORBIDDEN)
 end
 
-function _M:not_found(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_NOT_FOUND)
+function _M.not_found(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_NOT_FOUND)
 end
 
-function _M:method_not_allowed(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_METHOD_NOT_ALLOWED)
+function _M.method_not_allowed(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_METHOD_NOT_ALLOWED)
 end
 
-function _M:gone(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_GONE)
+function _M.gone(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_GONE)
 end
 
-function _M:unprocessable_entity(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 422)
+function _M.unprocessable_entity(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 422)
 end
 
-function _M:locked(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 423)
+function _M.locked(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 423)
 end
 
-function _M:too_many_requests(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_TOO_MANY_REQUESTS)
+function _M.too_many_requests(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_TOO_MANY_REQUESTS)
 end
 
-function _M:internal_server_error(errcode, errmsg)
-    return _M:wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_INTERNAL_SERVER_ERROR)
+function _M.internal_server_error(errcode, errmsg)
+    return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
 
-function _M:get_body_data()
+function _M.get_body_data()
     local body = ngx.req.get_body_data()
     if not body then
         return nil
@@ -137,7 +137,7 @@ function _M:get_body_data()
     return cjson.decode(body)
 end
 
-function _M:add_hypermedia(res, rel, uri, method)
+function _M.hypermedia(res, rel, uri, method)
     if type(res) ~= "table" then
         return
     end
@@ -154,7 +154,7 @@ function _M:add_hypermedia(res, rel, uri, method)
     return
 end
 
-function _M:success(res)
+function _M.success(res)
     if type(res) == "table" and type(res.status) == "number" and res.status >= 200 and res.status < 400 then
         return true
     end
@@ -162,7 +162,7 @@ function _M:success(res)
     return false
 end
 
-function _M:say(res)
+function _M.say(res)
     local default_status = {
         ["GET"]     = 200,
         ["PUT"]     = 201,
