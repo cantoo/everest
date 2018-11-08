@@ -8,11 +8,11 @@ local method_resources_file = table_concat({echo_request_method, res1, ngx_var[3
 
 local res1_sub = ngx.re.match(res1, ".*_(.*)$")
 res1_sub = res1_sub and res1_sub[1] or res1
-local success, mod = pcall(require, table_concat({ngx_var.server_port, res1_sub, method_resources_file}, "."))
---local success, mod = true, require(table_concat({ngx_var.server_port, res1_sub, method_resources_file}, "."))
+local success, mod = pcall(require, table_concat({res1_sub, method_resources_file}, "."))
+--local success, mod = true, require(table_concat({res1_sub, method_resources_file}, "."))
 if not success or not mod or type(mod.run) ~= "function" then
     ngx_exit(ngx.HTTP_NOT_FOUND)
 end
 
 local restful = require("resty.restful")
-restful:say(mod:run())
+restful.say(mod:run())
