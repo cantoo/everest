@@ -5,7 +5,7 @@ local _M = {}
 
 local mt = { __index = _M }
 
-function _M:new(conf)
+function _M.new(conf)
     if not conf or not conf.host or not conf.password then
         error("host and password required")
     end

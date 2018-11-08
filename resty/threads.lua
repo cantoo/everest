@@ -5,7 +5,7 @@ local mt = { __index = _M }
 local ngx_spawn = ngx.thread.spawn
 local ngx_wait = ngx.thread.wait
 
-function _M:new()
+function _M.new()
     return setmetatable({threads = {}}, mt)
 end
 
