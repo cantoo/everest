@@ -88,43 +88,43 @@ function _M.temporary_redirect(uri)
     return res
 end
 
-function _M.bad_request(errcode, errmsg)
+function _M.bad_request(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.BAD_REQUEST)
 end
 
-function _M.unauthorized(errcode, errmsg)
+function _M.unauthorized(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_UNAUTHORIZED)
 end
 
-function _M.forbidden(errcode, errmsg)
+function _M.forbidden(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_FORBIDDEN)
 end
 
-function _M.not_found(errcode, errmsg)
+function _M.not_found(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_NOT_FOUND)
 end
 
-function _M.method_not_allowed(errcode, errmsg)
+function _M.method_not_allowed(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_METHOD_NOT_ALLOWED)
 end
 
-function _M.gone(errcode, errmsg)
+function _M.gone(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_GONE)
 end
 
-function _M.unprocessable_entity(errcode, errmsg)
+function _M.unprocessable_entity(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 422)
 end
 
-function _M.locked(errcode, errmsg)
+function _M.locked(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, 423)
 end
 
-function _M.too_many_requests(errcode, errmsg)
+function _M.too_many_requests(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_TOO_MANY_REQUESTS)
 end
 
-function _M.internal_server_error(errcode, errmsg)
+function _M.internal_server_error(errmsg, errcode)
     return _M.wrap((errmsg or errcode) and {errmsg = errmsg, errcode = errcode}, ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
 
