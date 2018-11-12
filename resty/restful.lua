@@ -175,11 +175,11 @@ function _M.say(res)
     if type(res.body) == "table" then
         cjson.encode_empty_table_as_object(false)
         local body = cjson.encode(res.body)
-        ngx.header["Content-Type"] = "application/json; charset=utf-8"
         ngx.header["Content-Length"] = #body + 1
         ngx.say(body)
     elseif res.body then
         local body = tostring(res.body)
+        ngx.header["Content-Type"] = "text/plain; charset=utf-8"
         ngx.header["Content-Length"] = #body
         ngx.print(body)
     end
