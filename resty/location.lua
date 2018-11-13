@@ -9,13 +9,21 @@ local ngx_phase = ngx.get_phase
 local _M = {}
 local mt = { __index = _M }
 
+local function _ok(self)
+    if type(self) == "table" and type(self.status) == "number" and self.status >= 200 and self.status < 400 then
+        return true
+    end
+
+    return false
+end
+
 function _M.new(prefix)
     return setmetatable({prefix = prefix}, mt)
 end
 
 function _M.subrequest(uri, options)
     if type(options) == "table" and type(options.body) == "table" then
-        options.body = cjson_encode(body)
+        options.body = cjson_encode(options.body)
     end
 
     local res = ngx_capture(uri, options)
@@ -23,7 +31,7 @@ function _M.subrequest(uri, options)
         res.body = cjson_decode(res.body)
     end
 
-    return res
+    return setmetatable(res, {__call = _ok})
 end
 
 function _M.httprequest(uri, options)
@@ -44,13 +52,13 @@ function _M.httprequest(uri, options)
         end
 
         if type(options.body) == "table" then
-            options.body = cjson_encode(body)
+            options.body = cjson_encode(options.body)
         end
     end
 
     local httpc = http:new()
     httpc:set_timeout(options.timeout or 5000)
-    local res, err = httpc:request_uri("http://127.0.0.1" .. uri, params)
+    local res, err = httpc:request_uri("http://127.0.0.1" .. uri, options)
 
     res = res or {}
     if type(res.headers) == "table" then
@@ -66,7 +74,7 @@ function _M.httprequest(uri, options)
         res.err = err
     end
 
-    return res
+    return setmetatable(res, {__call = _ok})
 end
 
 function _M.capture(uri, options)
