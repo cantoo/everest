@@ -47,7 +47,7 @@ function _M.wrap(body, status)
 end
 
 function _M.ok(body, last_modified)
-    local res = _M.wrap(body, ngx.HTTP_OK)
+    local res = _M.wrap(body)
     if type(last_modified) == "number" then
         ngx.header["Last-Modified"] = http_time(last_modified)
     end
