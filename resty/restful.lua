@@ -82,7 +82,7 @@ end
 function _M.temporary_redirect(uri)
     local res = _M.wrap(nil, ngx.HTTP_TEMPORARY_REDIRECT)
     if type(uri) == "string" and #uri > 0 then
-        ngx.header["Location"] = uri 
+        ngx.header["Location"] = uri
     end
 
     return res
@@ -158,7 +158,7 @@ function _M.success(res)
     if type(res) == "table" and type(res.status) == "number" and res.status >= 200 and res.status < 400 then
         return true
     end
-    
+
     return false
 end
 
@@ -175,6 +175,7 @@ function _M.say(res)
     if type(res.body) == "table" then
         cjson.encode_empty_table_as_object(false)
         local body = cjson.encode(res.body)
+        ngx.header["Content-Type"] = "application/json; charset=utf-8"
         ngx.header["Content-Length"] = #body + 1
         ngx.say(body)
     elseif res.body then
