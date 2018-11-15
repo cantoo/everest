@@ -22,8 +22,21 @@ function _M.new(prefix)
 end
 
 function _M.subrequest(uri, options)
-    if type(options) == "table" and type(options.body) == "table" then
-        options.body = cjson_encode(options.body)
+    if type(options) == "table" then
+        if type(options.body) == "table" then
+            options.body = cjson_encode(options.body)
+        end
+
+        if type(options.method) == "string" then
+            local method_str2num = {
+                ["GET"] = ngx.HTTP_GET,
+                ["PUT"] = ngx.HTTP_PUT,
+                ["POST"] = ngx.HTTP_POST,
+                ["DELETE"] = ngx.HTTP_DELETE
+            }
+
+            options.method = method_str2num[options.method]
+        end
     end
 
     local res = ngx_capture(uri, options)
@@ -44,7 +57,7 @@ function _M.httprequest(uri, options)
                 [ngx.HTTP_DELETE] = "DELETE"
             }
 
-            options.method = method_num2str(options.method)
+            options.method = method_num2str[options.method]
         end
 
         if not options.query and options.args then
