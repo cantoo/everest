@@ -53,7 +53,7 @@ function _M:connect()
     return db
 end
 
-function _M:query_db(db, sql, nrows)
+function _M.query_db(db, sql, nrows)
     local res, err, errcode, sqlstate = db:query(sql, nrows)
     if not res then
         ngx.log(ngx.ERR, "bad result: ", err, ": ", errcode, ": ", sqlstate, ",sql=", sql)
@@ -77,7 +77,7 @@ function _M:get(sql)
     end
 
     local res
-    res, err, errcode, sqlstate = self:query_db(db, sql, 1)
+    res, err, errcode, sqlstate = _M.query_db(db, sql, 1)
     if not res then
         return nil, err, errcode, sqlstate
     end
@@ -99,7 +99,7 @@ function _M:query(sql)
     end
 
     local res
-    res, err, errcode, sqlstate = self:query_db(db, sql)
+    res, err, errcode, sqlstate = _M.query_db(db, sql)
     if not res then
         return nil, err, errcode, sqlstate
     end
@@ -135,7 +135,7 @@ function _M:execute(sql)
     end
 
     local res
-    res, err, errcode, sqlstate = self:query_db(db, sql)
+    res, err, errcode, sqlstate = _M.query_db(db, sql)
     if not res then
         return nil, err, errcode, sqlstate
     end
@@ -158,7 +158,7 @@ function _M:query_multi_resultset(sqls)
     end
 
     local res
-    res, err, errcode, sqlstate = self:query_db(db, table.concat(sqls, "; ") .. ";")
+    res, err, errcode, sqlstate = _M.query_db(db, table.concat(sqls, "; ") .. ";")
     if not res then
         return nil, err, errcode, sqlstate
     end
@@ -210,16 +210,16 @@ function _M:transaction(sqls)
     end
 
     local res
-    res, err, errcode, sqlstate = self:query_db(db, "start transaction;")
+    res, err, errcode, sqlstate = _M.query_db(db, "start transaction;")
     if not res then
         return nil, err, errcode, sqlstate
     end
 
     res, err, errcode, sqlstate = _do_transaction(db, sqls)
     if not res then
-        self:query_db(db, "rollback;")
+        _M.query_db(db, "rollback;")
     else
-        self:query_db(db, "commit;")
+        _M.query_db(db, "commit;")
     end
 
     if res or errcode == _M.NO_AFFECTED then
