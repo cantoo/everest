@@ -1,7 +1,6 @@
 local restful = require("resty.restful")
 
 local table_concat = table.concat
-local ngx_exit = ngx.exit
 local ngx_var = ngx.var
 
 local res1 = ngx_var[1]

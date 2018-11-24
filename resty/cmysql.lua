@@ -184,7 +184,7 @@ local function _do_transaction(db, sqls)
     local multi_resultset = {}
 
     for i, sql in ipairs(sqls) do
-        local res, err, errcode, sqlstate = _M:query_db(db, sql)
+        local res, err, errcode, sqlstate = _M.query_db(db, sql)
         if not res then
             ngx.log(ngx.ERR, "bad result #", i, ": ", err, ": ", errcode, ": ", sqlstate, ",sql=", sql)
             return nil, err, errcode, sqlstate
