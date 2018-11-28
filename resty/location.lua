@@ -71,7 +71,7 @@ function _M.httprequest(uri, options)
 
     local httpc = http:new()
     httpc:set_timeout(options.timeout or 5000)
-    local res, err = httpc:request_uri("http://127.0.0.1" .. uri, options)
+    local res, err = httpc:request_uri("http://127.0.0.1:" .. ngx.var.server_port .. uri, options)
 
     res = res or {}
     if type(res.headers) == "table" then
