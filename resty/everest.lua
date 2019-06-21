@@ -15,10 +15,10 @@ function _M.init_worker()
 end
 
 -- used as gateway access phase
-function _M.gateway_access()
-	-- must set $service_name var as upstream service name
+function _M.access()
+	-- must set $app var as upstream service name
 	-- prepare upstreams
-	local ok = registry.prepare(ngx_var.service_name)
+	local ok = registry.prepare(ngx_var.app)
 	if not ok then
 		return ngx.exit(ngx.HTTP_BAD_GATEWAY)
 	end
@@ -30,13 +30,14 @@ function _M.gateway_access()
 end
 
 -- used as app service rpc rewrite phase
-function _M.rpc_access()
-	-- must set $service_name var as upstream service name
+function _M.rewrite()
 	-- prepare upstreams
-	local ok = registry.prepare(ngx_var.service_name)
+	local ok = registry.prepare(ngx.var[1])
 	if not ok then
 		return ngx.exit(ngx.HTTP_NOT_FOUND)
 	end
+	
+	return ngx.req.set_uri(ngx.var[2])
 end
 
 -- used as services except gateway content phase
