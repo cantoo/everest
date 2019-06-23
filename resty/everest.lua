@@ -2,6 +2,7 @@ local conf = require("conf")
 local restful = require("resty.restful")
 
 local registry = conf.registry
+local balancer = conf.balancer
 local table_concat = table.concat
 local ngx_var = ngx.var
 
@@ -54,7 +55,15 @@ function _M.content()
 		return ngx.exit(ngx.HTTP_NOT_FOUND)
 	end
 
-	return restful.say(handler.handle())
+	return restful.say(handler.content())
+end
+
+-- used as rpc load balance
+function _M.balancer()
+end
+
+-- used as rpc qos statistic
+function _M.log()
 end
 
 return _M

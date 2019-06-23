@@ -1,5 +1,5 @@
 local _M = {
-	registry = require("registry.etcd"),
+	registry = require("resty.registry.etcd"),
 }
 
 return _M
