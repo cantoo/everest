@@ -5,6 +5,7 @@ local registry = conf.registry
 local balancer = conf.balancer
 local table_concat = table.concat
 local ngx_var = ngx.var
+local ngx_req_set_uri = ngx.req.set_uri
 
 local _M = {}
 
@@ -12,16 +13,20 @@ function _M.init()
 end
 
 function _M.init_worker()
-	registry.init_worker(conf.service_name)
+	if registry then
+		registry.init_worker()
+	end
 end
 
 -- used as gateway access phase
 function _M.access()
-	-- must set $app var as upstream service name
-	-- prepare upstreams
-	local ok = registry.prepare(ngx_var.app)
-	if not ok then
-		return ngx.exit(ngx.HTTP_BAD_GATEWAY)
+	if registry then
+		-- must set $app var as upstream service name
+		-- prepare upstreams
+		local err = registry.prepare(ngx_var.application)
+		if err ~= nil then
+			return ngx.exit(ngx.HTTP_BAD_GATEWAY)
+		end
 	end
 
 	local auth = conf.auth 
@@ -32,13 +37,17 @@ end
 
 -- used as app service rpc rewrite phase
 function _M.rewrite()
+	if not registry then
+		return ngx.exit(ngx.HTTP_NOT_FOUND)
+	end
+
 	-- prepare upstreams
-	local ok = registry.prepare(ngx.var[1])
-	if not ok then
+	local err = registry.prepare(ngx.var[1])
+	if err ~= nil then
 		return ngx.exit(ngx.HTTP_NOT_FOUND)
 	end
 	
-	return ngx.req.set_uri(ngx.var[2])
+	return ngx_req_set_uri(ngx.var[2])
 end
 
 -- used as services except gateway content phase

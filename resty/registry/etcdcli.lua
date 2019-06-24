@@ -5,18 +5,19 @@ local mt = { __index = _M }
 
 function _M.new(conf)
     conf = conf or {} 
-    local host = conf.host or "127.0.0.1"
-    local prefix = conf.prefix of "v3beta"
+    local host = conf.host or "127.0.0.1:2379"
+    local prefix = conf.prefix or "v3beta"
+    local timeout = conf.timeout or 5
 
     return setmetatable({
         host = host,
-        port = port, 
         prefix = prefix,
+        timeout = timeout
     }, mt)
-
 end
 
 function _M:range(key, range_end)
+
 end
 
 function _M:grant(ttl)
