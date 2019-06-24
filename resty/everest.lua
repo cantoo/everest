@@ -23,8 +23,8 @@ function _M.access()
 	if registry then
 		-- must set $app var as upstream service name
 		-- prepare upstreams
-		local err = registry.prepare(ngx_var.application)
-		if err ~= nil then
+		local ok = registry.prepare(ngx_var.application)
+		if not ok then
 			return ngx.exit(ngx.HTTP_BAD_GATEWAY)
 		end
 	end
@@ -42,8 +42,8 @@ function _M.rewrite()
 	end
 
 	-- prepare upstreams
-	local err = registry.prepare(ngx.var[1])
-	if err ~= nil then
+	local ok = registry.prepare(ngx.var[1])
+	if not ok then
 		return ngx.exit(ngx.HTTP_NOT_FOUND)
 	end
 	
