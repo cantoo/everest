@@ -10,6 +10,8 @@ local new_tab = table.insert
 local exiting = ngx.worker.exiting
 local json_encode = cjson.encode
 local json_decode = cjson.decode
+local encode_base64 = ngx.encode_base64
+local decode_base64 = ngx.decode_base64
 local to_hex = resty_string.to_hex
 local random_bytes = resty_random.bytes
 local ngx_timer_at = ngx.timer.at
@@ -29,6 +31,7 @@ function _M.new(conf)
     local ttl = conf.ttl or 10
     local addr = conf.addr
     local name = conf.name 
+    local version = conf.version
 
     local clients = new_tab(#hosts, 0)
     for _, host in ipairs(hosts) do
@@ -43,6 +46,7 @@ function _M.new(conf)
         clients = clients,
         client = clients[1],
         name = name,
+        version = version,
         addr = addr,
         ttl = ttl,
         timeout = timeout,
@@ -74,7 +78,7 @@ function _M:register()
             ngx.sleep(self.ttl)
         else
             local key = table_concat(registry_path, self.name, "/", self.addr)
-            local ok = client:put(key, json_encode({add = self.addr}), lease)
+            local ok = client:put(encode_base64(key), encode_base64(json_encode({add = self.addr, metadata={version = self.version}})), lease)
             if not ok then
                 client:revoke(lease)
                 ngx.sleep(self.ttl)
@@ -97,8 +101,8 @@ function _M:register()
 end 
 
 local function _get_key_range_end(service_name)
-    local key = table_concat(registry_path, service_name, "/")
-    local range_end = table_concat(key, "a")
+    local key = encode_base64(table_concat(registry_path, service_name, "/"))
+    local range_end = encode_base64(table_concat(key, "a"))
     return key, range_end
 end
 
@@ -165,8 +169,25 @@ function _M:prepare(service_name)
     end
 
     local key, range_end = _get_key_range_end(service_name)
-    addrs = self.client:range(key, range_end)
-    if not addrs then
+    local kvs = self.client:range(key, range_end)
+    if not kvs then
+        lock:unlock()
+        return false, nil
+    end
+
+    addrs = new_tab(100, 0)
+    if type(kvs) == "table" then
+        for _, kv in ipairs(kvs) do 
+            if type(kv) == "table" and type(kv.value) == "string" then    
+                local addr = decode_json(decode_base64(kv.value))
+                if type(addr) == "table" and type(addr.addr) == "string" then
+                    table_insert(addrs, addr)
+                end
+            end
+        end
+    end
+
+    if #addrs == 0 then 
         lock:unlock()
         return false, nil
     end
