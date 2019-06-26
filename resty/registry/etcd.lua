@@ -4,9 +4,9 @@ local resty_string = require("resty.string")
 local resty_random = require("resty.random")
 local resty_lock = require("resty.lock")
 
-local table_new = table.new
+local new_tab = table.new
 local table_concat = table.concat
-local new_tab = table.insert
+local table_insert = table.insert
 local exiting = ngx.worker.exiting
 local json_encode = cjson.encode
 local json_decode = cjson.decode
@@ -17,7 +17,7 @@ local random_bytes = resty_random.bytes
 local ngx_timer_at = ngx.timer.at
 local ngx_worker_id = ngx.worker.id
 
-local registry = lua.shared.registry
+local registry = ngx.shared.registry
 local registry_path = "/services/"
 local registry_lock = "registry_lock"
 
@@ -78,7 +78,9 @@ function _M:register()
             ngx.sleep(self.ttl)
         else
             local key = table_concat(registry_path, self.name, "/", self.addr)
-            local ok = client:put(encode_base64(key), encode_base64(json_encode({add = self.addr, metadata={version = self.version}})), lease)
+            local ok = client:put(encode_base64(key), encode_base64(json_encode({
+                add = self.addr, 
+                metadata={version = self.version}})), lease)
             if not ok then
                 client:revoke(lease)
                 ngx.sleep(self.ttl)
@@ -107,14 +109,21 @@ local function _get_key_range_end(service_name)
 end
 
 local function _watch(etcd, service_name)
+    local addrs, err = registry:get(service_name)
+    if not addrs then
+        -- todo: error log
+        return err
+    end
+
     local key, range_end = _get_key_range_end(service_name)
 
     while not exiting() do
-        local reader, close, err = etcd.client:watch(key, range_end)
+        local reader, httpc
+        reader, httpc, err = etcd.client:watch(key, range_end)
         if not reader then
             -- TODO: add error log
-            close()
-            ngx.sleep(etcd.timeout)
+            httpc:close()
+            ngx.sleep(etcd.client.watch_timeout)
         end
 
         while not exiting() do
@@ -130,12 +139,17 @@ local function _watch(etcd, service_name)
             -- TODO: add debug log
 
             if chunk then
-                --local res = json_decode(chunk)
+                -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"34","raft_term":"3"},"created":true}}
+
+                -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"35","raft_term":"3"},"events":[{"kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","create_revision":"35","mod_revision":"35","version":"1","value":"eyJBZGRyIjoiNC4zLjIuMTo4ODg4In0=","lease":"7587839221445806083"}}]}}
+
+                -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"36","raft_term":"3"},"events":[{"type":"DELETE","kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","mod_revision":"36"}}]}}es = json_decode(chunk)
+                
                 -- deal with res
             end
         end
 
-        close()
+        httpc:close()
     end
 end
 
@@ -179,7 +193,7 @@ function _M:prepare(service_name)
     if type(kvs) == "table" then
         for _, kv in ipairs(kvs) do 
             if type(kv) == "table" and type(kv.value) == "string" then    
-                local addr = decode_json(decode_base64(kv.value))
+                local addr = json_decode(decode_base64(kv.value))
                 if type(addr) == "table" and type(addr.addr) == "string" then
                     table_insert(addrs, addr)
                 end
@@ -193,7 +207,7 @@ function _M:prepare(service_name)
     end
 
     local ok
-    ok, err = registry:set(service_name, addrs)
+    ok, err = registry:set(service_name, json_encode(addrs))
     if not ok then
         lock:unlock()
         return false, err

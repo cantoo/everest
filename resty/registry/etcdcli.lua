@@ -2,9 +2,7 @@ local http = require("resty.http")
 local cjson = require("cjson.safe")
 
 local new_http = http.new
-local new_tab = table.new
 local table_concat = table.concat
-local table_insert = table.insert
 local json_encode = cjson.encode
 local json_decode = cjson.decode
 
@@ -28,12 +26,14 @@ function _M.new(conf)
     
     local prefix = conf.prefix or "v3beta"
     local timeout = conf.timeout or 5
+    local watch_timeout = conf.watch_timeout or 10
 
     return setmetatable({
         host = host,
         port = port,
         prefix = prefix,
-        timeout = timeout
+        timeout = timeout,
+        watch_timeout = watch_timeout,
     }, mt)
 end
 
@@ -105,7 +105,7 @@ end
 
 function _M:keepalive(lease)
     local body, err = _request_uri(self, "/lease/keepalive", {
-        lease = lease, 
+        ID = lease, 
     })
 
     if not body then
@@ -116,6 +116,15 @@ function _M:keepalive(lease)
 end
 
 function _M:revoke(lease)
+    local body, err = _request_uri(self, "/lease/revoke", {
+        ID = lease, 
+    })
+
+    if not body then
+        return nil, err
+    end 
+
+    return true, nil
 end
 
 function _M:watch(key, range_end)
@@ -124,15 +133,16 @@ function _M:watch(key, range_end)
         return nil, nil, err
     end
 
-    httpc:set_timeout(self.timeout * 1000)
+    httpc:set_timeout(self.timeout * 1000, self.timeout * 1000, self.watch_timeout * 1000)
 
     local ok
-    ok, err = httpc:connect(self.host, self.port)
+    ok, err = httpc:connects(self.host, self.port)
     if not ok then
         return nil, nil, err
     end
 
-    local res, err = httpc:request({
+    local res
+    res, err = httpc:request({
         path = "/watch",
         body = json_decode({
             create_request = {
@@ -152,8 +162,7 @@ function _M:watch(key, range_end)
         return nil, "etcdcli response status " .. res.status
     end
 
-    local close = httpc.close
-    return res.body_reader, close, nil
+    return res.body_reader, httpc, nil
 end
 
 return _M

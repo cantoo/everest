@@ -1,15 +1,10 @@
--- Copyright (C) Yuansheng Wang
-
-local ngx = ngx
+local ngx_log = ngx.log
 local ngx_var = ngx.var
-local ngx_log  = ngx.log
-local ngx_DEBUG= ngx.DEBUG
-local DEBUG    = ngx.config.debug
--- todo: support stream module
-local cur_level = ngx.config.subsystem == "http" and require("ngx.errlog").get_sys_filter_level()
+local debug_info = debug.getinfo
+local format = string.format
+local cur_level = require("ngx.errlog").get_sys_filter_level()
 
 local _M = {version = 0.1}
-
 
 for name, log_level in pairs({stderr = ngx.STDERR,
                               emerg  = ngx.EMERG,
@@ -24,18 +19,10 @@ for name, log_level in pairs({stderr = ngx.STDERR,
             return
         end
 
-        return ngx_log(log_level, " [", ngx_var.x_request_id, "] ", ...)
+        local info = debug_info(2, "nSl")
+        local extra = format(" [%s] %s %s:%d: ", ngx_var.http_x_request_id, info.name, info.short_src, info.currentline)
+        return ngx_log(log_level, extra, ...)
     end
 end
-
-
-function _M.debug(...)
-    if not DEBUG and cur_level and ngx_DEBUG > cur_level then
-        return
-    end
-
-    return ngx_log(ngx_DEBUG, " [", ngx_var.x_request_id, "] ", ...)
-end
-
 
 return _M
