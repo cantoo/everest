@@ -1,5 +1,6 @@
 local http = require("resty.http")
 local cjson = require("cjson.safe")
+local log = require("resty.log")
 
 local new_http = http.new
 local table_concat = table.concat
@@ -44,19 +45,20 @@ local function _request_uri(etcdcli, cmd, body)
     end
 
     httpc:set_timeout(etcdcli.timeout * 1000)
+    local request_body = json_encode(body)
 
     local res
     res, err = httpc:request_uri(table_concat("http://", etcdcli.host, ":", etcdcli.port, "/", etcdcli.prefix, cmd), {
         method = "POST",    
-        body = json_encode(body)
+        body = request_body,
     })
 
     if not res then
-        -- todo add err log
+        log.error(err)
         return nil, err
     end
 
-    -- todo debug res
+    log.debug("cmd=", cmd, ",request body=", request_body, ",response status=", res.status, ",response body=", res.body)
     if res.status >= 300 then
         return nil, "etcdcli response status " .. res.status
     end
@@ -130,6 +132,7 @@ end
 function _M:watch(key, range_end)
     local httpc, err = new_http()
     if not httpc then
+        log.error(err)
         return nil, nil, err
     end
 
@@ -138,6 +141,7 @@ function _M:watch(key, range_end)
     local ok
     ok, err = httpc:connects(self.host, self.port)
     if not ok then
+        log.error(err)
         return nil, nil, err
     end
 
@@ -153,11 +157,11 @@ function _M:watch(key, range_end)
     })
 
     if not res then
-        -- todo error log
+        log.error(err)
         return nil, nil, err
     end
 
-    -- todo debug res
+    log.debug("key=", key, ",range_end=", range_end, ",response status=", res.status, ",response body=", res.body)
     if res.status >= 300 then
         return nil, "etcdcli response status " .. res.status
     end

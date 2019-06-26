@@ -3,10 +3,12 @@ local etcdcli = require("resty.registry.etcdcli")
 local resty_string = require("resty.string")
 local resty_random = require("resty.random")
 local resty_lock = require("resty.lock")
+local log = require("resty.log")
 
 local new_tab = table.new
 local table_concat = table.concat
 local table_insert = table.insert
+local table_remove = table.remove
 local exiting = ngx.worker.exiting
 local json_encode = cjson.encode
 local json_decode = cjson.decode
@@ -111,7 +113,7 @@ end
 local function _watch(etcd, service_name)
     local addrs, err = registry:get(service_name)
     if not addrs then
-        -- todo: error log
+        log.error(err)
         return err
     end
 
@@ -121,7 +123,7 @@ local function _watch(etcd, service_name)
         local reader, httpc
         reader, httpc, err = etcd.client:watch(key, range_end)
         if not reader then
-            -- TODO: add error log
+            log.error(err)
             httpc:close()
             ngx.sleep(etcd.client.watch_timeout)
         end
@@ -130,22 +132,60 @@ local function _watch(etcd, service_name)
             local chunk
             chunk, err = reader()
             if err then 
-                -- TODO: add error log
+                log.error(err)
                 if not string.find(err, "timeout") then
                     break
                 end
             end
 
-            -- TODO: add debug log
-
+            log.debug("service_name=", service_name, ",chunk=", chunk)
             if chunk then
+                local res = json_decode(chunk)
+                if not res then
+                    log.error("failed to decode chunk=", chunk)
+                else
+                    if type(res.events) == "table" then
+                        for _, event in ipairs(res.events) do
+                            if type(event.kv) == "table" and (event.type == "PUT" or event.kv.version == "1") then
+                                local caddr = json_decode(decode_base64(event.kv.value))
+                                if not caddr or not caddr.addr then
+                                    log.error("failed to decode or invalid event value=", event.kv.value)
+                                else
+                                    local i = 1
+                                    while i <= #addrs do
+                                        if caddr.addr == addrs[i].addr then
+                                            break
+                                        end
+                                        
+                                        i = i + 1
+                                    end
+
+                                    addrs[i] = caddr
+                                end
+                            elseif event.type == "DELETE" and type(event.kv) == "table" then
+                                local key = decode_base64(event.kv.key)
+                                local i = 1
+                                while i <= #addrs do
+                                    if key == addrs[i].addr then
+                                        break
+                                    end
+                                    
+                                    i = i + 1
+                                end
+
+                                table_remove(addrs, i)
+                            end
+                        end
+
+                        registry:set(service_name, json_encode(addrs))
+                    end
+                end
+
                 -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"34","raft_term":"3"},"created":true}}
 
                 -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"35","raft_term":"3"},"events":[{"kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","create_revision":"35","mod_revision":"35","version":"1","value":"eyJBZGRyIjoiNC4zLjIuMTo4ODg4In0=","lease":"7587839221445806083"}}]}}
 
                 -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"36","raft_term":"3"},"events":[{"type":"DELETE","kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","mod_revision":"36"}}]}}es = json_decode(chunk)
-                
-                -- deal with res
             end
         end
 
