@@ -7,16 +7,21 @@ local cur_level = require("ngx.errlog").get_sys_filter_level()
 
 local _M = {version = 0.1}
 
-for name, log_level in pairs({stderr = ngx.STDERR,
-                              emerg  = ngx.EMERG,
-                              alert  = ngx.ALERT,
-                              crit   = ngx.CRIT,
-                              error  = ngx.ERR,
-                              warn   = ngx.WARN,
-                              notice = ngx.NOTICE,
-                              info   = ngx.INFO, }) do
-    _M[name] = function(...)
-        if cur_level and log_level > cur_level then
+local log_levels = {
+    { name = "stderr", level = ngx.STDERR },
+    { name = "emerg",  level = ngx.EMERG },
+    { name = "alert",  level = ngx.ALERT },
+    { name = "crit",   level = ngx.CRIT },
+    { name = "error",  level = ngx.ERR },
+    { name = "warn",   level = ngx.WARN },
+    { name = "notice", level = ngx.NOTICE },
+    { name = "info",   level = ngx.INFO },
+    { name = "debug",  level = ngx.DEBUG },
+}
+
+for _, log_level in ipairs(log_levels) do
+    _M[log_level.name] = function(...)
+        if cur_level and log_level.level > cur_level then
             return
         end
 
@@ -28,7 +33,7 @@ for name, log_level in pairs({stderr = ngx.STDERR,
 
         local info = debug_info(2, "nSl")
         local extra = format(" [%s] %s %s:%d: ", request_id, info.name, info.short_src, info.currentline)
-        return ngx_log(log_level, extra, ...)
+        return ngx_log(log_level.level, extra, ...)
     end
 end
 

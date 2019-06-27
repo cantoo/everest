@@ -2,7 +2,7 @@ local conf = require("conf")
 local restful = require("resty.restful")
 
 local registry = conf.registry
-local balancer = conf.balancer
+local lb = conf.lb
 local table_concat = table.concat
 local ngx_var = ngx.var
 local ngx_req_set_uri = ngx.req.set_uri
@@ -14,7 +14,7 @@ end
 
 function _M.init_worker()
 	if registry then
-		registry.init_worker()
+		registry:init_worker()
 	end
 end
 
@@ -69,10 +69,11 @@ end
 
 -- used as rpc load balance
 function _M.balancer()
+	return lb.balancer()
 end
 
--- used as rpc qos statistic
-function _M.log()
-end
+-- -- used as rpc qos statistic
+-- function _M.log()
+-- end
 
 return _M

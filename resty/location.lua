@@ -1,8 +1,8 @@
 local cjson = require("cjson.safe")
 local http = require("resty.http")
 
-local cjson_encode = cjson.encode
-local cjson_decode = cjson.decode
+local json_encode = cjson.encode
+local json_decode = cjson.decode
 local ngx_capture = ngx.location.capture
 local ngx_phase = ngx.get_phase
 
@@ -21,10 +21,10 @@ function _M.new(prefix, server_port)
     return setmetatable({prefix = prefix, server_port = server_port or 80}, mt)
 end
 
-function _M.subrequest(uri, options)
+function _M:subrequest(uri, options)
     if type(options) == "table" then
         if type(options.body) == "table" then
-            options.body = cjson_encode(options.body)
+            options.body = json_encode(options.body)
         end
 
         if type(options.method) == "string" then
@@ -39,15 +39,15 @@ function _M.subrequest(uri, options)
         end
     end
 
-    local res = ngx_capture(uri, options)
+    local res = ngx_capture(self.prefix .. uri, options)
     if type(res) == "table" and type(res.body) == "string" then
-        res.body = cjson_decode(res.body)
+        res.body = json_decode(res.body)
     end
 
     return setmetatable(res, {__call = _ok})
 end
 
-function _M.httprequest(uri, options)
+function _M:httprequest(uri, options)
     if type(options) == "table" then
         if type(options.method) == "number" then
             local method_num2str = {
@@ -65,13 +65,13 @@ function _M.httprequest(uri, options)
         end
 
         if type(options.body) == "table" then
-            options.body = cjson_encode(options.body)
+            options.body = json_encode(options.body)
         end
     end
 
-    local httpc = http.new()
+    local httpc = http:new()
     httpc:set_timeout(options.timeout or 5000)
-    local res, err = httpc:request_uri("http://127.0.0.1:" .. self.server_port .. uri, options)
+    local res, err = httpc:request_uri("http://127.0.0.1:" .. self.server_port .. self.prefix .. uri, options)
 
     res = res or {}
     if type(res.headers) == "table" then
@@ -79,7 +79,7 @@ function _M.httprequest(uri, options)
     end
 
     if type(res.body) == "string" then
-        res.body = cjson_decode(res.body)
+        res.body = json_decode(res.body)
     end
 
     if err then
@@ -90,40 +90,40 @@ function _M.httprequest(uri, options)
     return setmetatable(res, {__call = _ok})
 end
 
-function _M.capture(uri, options)
+function _M:capture(uri, options)
     if ngx_phase() == "timer" then
-        return _M.httprequest(uri, options)
+        return self:httprequest(uri, options)
     end
 
-    return _M.subrequest(uri, options)
+    return self:subrequest(uri, options)
 end
 
 function _M:get(uri, options)
     options = options or {}
     options.method = ngx.HTTP_GET
-    return _M.capture(self.prefix .. uri, options)
+    return self:capture(uri, options)
 end
 
 function _M:put(uri, options)
     options = options or {}
     options.method = ngx.HTTP_PUT
-    return _M.capture(self.prefix .. uri, options)
+    return self:capture(uri, options)
 end
 
 function _M:post(uri, options)
     options = options or {}
     options.method = ngx.HTTP_POST
-    return _M.capture(self.prefix .. uri, options)
+    return self:capture(uri, options)
 end
 
 function _M:delete(uri, options)
     options = options or {}
     options.method = ngx.HTTP_DELETE
-    return _M.capture(self.prefix .. uri, options)
+    return self:capture(uri, options)
 end
 
 function _M:proxy()
-    return _M.subrequest(self.prefix .. ngx.var.echo_request_uri, {
+    return self:subrequest(ngx.var.echo_request_uri, {
         method = ngx.var.echo_request_method,
         args = ngx.var.args,
         always_forward_body = true,

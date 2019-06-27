@@ -12,19 +12,8 @@ local mt = { __index = _M }
 
 function _M.new(conf)
     conf = conf or {} 
-
-    local host, port
-    if type(conf.host) == "string" then
-        local match = ngx.re.match("(\\d+(?:\\.\\d+){3}):(\\d+)")
-        if match and #match >= 2 then
-            host = match[1]
-            port = match[2]
-        end
-    else
-        host = "127.0.0.1"
-        port = 2379
-    end 
-    
+    local host = conf.host or "127.0.0.1"
+    local port = conf.port or 2379
     local prefix = conf.prefix or "v3beta"
     local timeout = conf.timeout or 5
     local watch_timeout = conf.watch_timeout or 10
@@ -48,7 +37,7 @@ local function _request_uri(etcdcli, cmd, body)
     local request_body = json_encode(body)
 
     local res
-    res, err = httpc:request_uri(table_concat("http://", etcdcli.host, ":", etcdcli.port, "/", etcdcli.prefix, cmd), {
+    res, err = httpc:request_uri(table_concat({"http://", etcdcli.host, ":", etcdcli.port, "/", etcdcli.prefix, cmd}), {
         method = "POST",    
         body = request_body,
     })

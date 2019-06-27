@@ -1,15 +1,19 @@
 local location = require("resty.location")
-local utils = require("resty.utils")
+local etcd = require("resty.registry.etcd")
+local wrr = require("resty.lb.wrr")
 
--- get local interface
-local if_addr = utils.get_if_addr("eth0")
 local server_port = 80
 
 local _M = {
-	registry = require("resty.registry.etcd"),
-	balancer = require("resty.lb.wrr"),
+	registry = etcd.new({
+		name = "app",
+		version = 1,
+		ifa = "eno16777736",
+		port = server_port,
+	}),
 
-	users = location.new("/_rpc_users_"),
+	lb = wrr.new(),
+	users = location.new("/_rpc_app_", server_port),
 }
 
 return _M
