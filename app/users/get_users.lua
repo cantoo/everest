@@ -1,10 +1,17 @@
+local cjson = require("cjson.safe")
+local log = require("resty.log")
 local conf = require("conf")
+
+local json_encode = cjson.encode 
+
 local users = conf.users
 
 local _M = {}
 
 function _M.content()
-	return users:get("/hello")
+	local res = users:get("/hello")
+	log.debug(json_encode(res))
+	return res
 end
 
 return _M

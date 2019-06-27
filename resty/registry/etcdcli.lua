@@ -107,7 +107,7 @@ function _M:keepalive(lease)
 end
 
 function _M:revoke(lease)
-    local body, err = _request_uri(self, "/lease/revoke", {
+    local body, err = _request_uri(self, "/kv/lease/revoke", {
         ID = lease, 
     })
 

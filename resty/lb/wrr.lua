@@ -9,7 +9,7 @@ function _M.new()
 end
 
 function _M:balancer() 
-	local ok, err = ngx_balancer.set_current_peer("127.0.0.1", 8080)
+	local ok, err = ngx_balancer.set_current_peer("127.0.0.1", 6666)
     if not ok then
         log.error("failed to set the current peer: ", err)
         return ngx.exit(ngx.HTTP_NOT_FOUND)

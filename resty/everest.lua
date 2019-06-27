@@ -1,5 +1,6 @@
 local conf = require("conf")
 local restful = require("resty.restful")
+local log = require("resty.log")
 
 local registry = conf.registry
 local lb = conf.lb
@@ -42,7 +43,7 @@ function _M.rewrite()
 	end
 
 	-- prepare upstreams
-	local ok = registry.prepare(ngx.var[1])
+	local ok = registry:prepare(ngx.var[1])
 	if not ok then
 		return ngx.exit(ngx.HTTP_NOT_FOUND)
 	end

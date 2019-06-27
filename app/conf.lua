@@ -8,11 +8,12 @@ local _M = {
 	registry = etcd.new({
 		name = "app",
 		version = 1,
-		ifa = "eno16777736",
+		ifa = "eth0",
 		port = server_port,
 	}),
 
 	lb = wrr.new(),
+
 	users = location.new("/_rpc_app_", server_port),
 }
 

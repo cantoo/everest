@@ -72,7 +72,7 @@ local function register(_, self)
         log.debug("ifa=", self.ifa, ",addr=", addr)
     end
 
-    if not addr then
+    if not addr or addr == "" then
         log.error("no addr")
         return 
     end

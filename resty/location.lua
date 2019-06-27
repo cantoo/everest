@@ -41,7 +41,10 @@ function _M:subrequest(uri, options)
 
     local res = ngx_capture(self.prefix .. uri, options)
     if type(res) == "table" and type(res.body) == "string" then
-        res.body = json_decode(res.body)
+        local body = json_decode(res.body)
+        if body then
+            res.body = body
+        end
     end
 
     return setmetatable(res, {__call = _ok})
