@@ -1,6 +1,5 @@
 local ngx_log = ngx.log
 local ngx_var = ngx.var
-local debug_info = debug.getinfo
 local format = string.format
 local get_phase = ngx.get_phase
 local cur_level = require("ngx.errlog").get_sys_filter_level()
@@ -31,8 +30,7 @@ for _, log_level in ipairs(log_levels) do
             request_id = ngx_var.http_x_request_id
         end
 
-        local info = debug_info(2, "nSl")
-        local extra = format(" [%s] %s %s:%d: ", request_id, info.name, info.short_src, info.currentline)
+        local extra = format("[%s] ", request_id)
         return ngx_log(log_level.level, extra, ...)
     end
 end
