@@ -30,7 +30,7 @@ local mt = { __index = _M }
 
 function _M.new(conf)
     local hosts = conf.hosts or { { host = "127.0.0.1", port = 2379 } }
-    local prefix = conf.prefix or "v3beta"
+    local prefix = conf.prefix
     local timeout = conf.timeout or 5
     local ttl = conf.ttl or 10
     local addr = conf.addr
@@ -120,15 +120,22 @@ function _M:init_worker()
 end
 
 local function _get_key_range_end(service_name)
-    local key = encode_base64(table_concat({registry_path, service_name, "/"}))
+    local key = table_concat({registry_path, service_name, "/"})
     local range_end = encode_base64(table_concat({key, "a"}))
+    key = encode_base64(key)
     return key, range_end
 end
 
-local function _watch(etcd, service_name)
+local function _watch(_, etcd, service_name)
     local addrs, err = registry:get(service_name)
     if not addrs then
         return err
+    end
+
+    addrs = json_decode(addrs)
+    if not addrs then
+        registry:delete(service_name)
+        return "failed to json decode addrs"
     end
 
     local key, range_end = _get_key_range_end(service_name)
@@ -140,7 +147,7 @@ local function _watch(etcd, service_name)
         else
             while not exiting() do
                 local chunk
-                chunk, err = reader()
+                chunk, err = reader(8192)
                 if err then 
                     log.error(err)
                     if not string.find(err, "timeout") then
@@ -189,7 +196,7 @@ local function _watch(etcd, service_name)
                             end
 
                             if #addrs == 0 then
-                                registry.delete(service_name)
+                                registry:delete(service_name)
                                 httpc:close()
                                 return
                             else

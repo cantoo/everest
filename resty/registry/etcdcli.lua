@@ -14,7 +14,7 @@ function _M.new(conf)
     conf = conf or {} 
     local host = conf.host or "127.0.0.1"
     local port = conf.port or 2379
-    local prefix = conf.prefix or "v3beta"
+    local prefix = conf.prefix or "/v3beta"
     local timeout = conf.timeout or 5
     local watch_timeout = conf.watch_timeout or 10
 
@@ -37,7 +37,8 @@ local function _request_uri(etcdcli, cmd, body)
     local request_body = json_encode(body)
 
     local res
-    res, err = httpc:request_uri(table_concat({"http://", etcdcli.host, ":", etcdcli.port, "/", etcdcli.prefix, cmd}), {
+    local uri = table_concat({"http://", etcdcli.host, ":", etcdcli.port, etcdcli.prefix, cmd})
+    res, err = httpc:request_uri(uri, {
         method = "POST",    
         body = request_body,
     })
@@ -125,10 +126,10 @@ function _M:watch(key, range_end)
         return nil, nil, err
     end
 
-    httpc:set_timeout(self.timeout * 1000, self.timeout * 1000, self.watch_timeout * 1000)
+    httpc:set_timeouts(self.timeout * 1000, self.timeout * 1000, nil)
 
     local ok
-    ok, err = httpc:connects(self.host, self.port)
+    ok, err = httpc:connect(self.host, self.port)
     if not ok then
         log.error(err)
         return nil, nil, err
@@ -136,7 +137,8 @@ function _M:watch(key, range_end)
 
     local res
     res, err = httpc:request({
-        path = "/watch",
+        method = "POST",
+        path = self.prefix .. "/watch",
         body = json_decode({
             create_request = {
                 key = key,
