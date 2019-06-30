@@ -148,11 +148,11 @@ local function _watch(_, etcd, service_name)
     while not exiting() do
         local reader, httpc = etcd.client:watch(key, range_end)
         if not reader then
-            ngx.sleep(etcd.client.watch_timeout)
+            ngx.sleep(etcd.timeout)
         else
             while not exiting() do
                 local chunk
-                chunk, err = reader(8192)
+                chunk, err = reader()
                 if err then 
                     log.error(err)
                     break
@@ -180,10 +180,12 @@ local function _watch(_, etcd, service_name)
                                 end
 
                                 if event.type == "DELETE" then
+                                    -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"36","raft_term":"3"},"events":[{"type":"DELETE","kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","mod_revision":"36"}}]}}es = json_decode(chunk)
                                     if i <= #addrs then
                                         table_remove(addrs, i)
                                     end
                                 else
+                                    -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"35","raft_term":"3"},"events":[{"kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","create_revision":"35","mod_revision":"35","version":"1","value":"eyJBZGRyIjoiNC4zLjIuMTo4ODg4In0=","lease":"7587839221445806083"}}]}}
                                     value = json_decode(decode_base64(event.kv.value))
                                     if not value or type(value.addr) ~= "string" or type(value.port) ~= "number" then
                                         log.error("failed to decode event value=", event.kv.value, ",service_name=", service_name)
@@ -200,13 +202,7 @@ local function _watch(_, etcd, service_name)
 
                         value = json_encode(addrs)
                         registry:set(service_name, value)
-                        log.debug("update ", service_name, " addrs=", value)                        
-
-                        -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"34","raft_term":"3"},"created":true}}
-
-                        -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"35","raft_term":"3"},"events":[{"kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","create_revision":"35","mod_revision":"35","version":"1","value":"eyJBZGRyIjoiNC4zLjIuMTo4ODg4In0=","lease":"7587839221445806083"}}]}}
-
-                        -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"36","raft_term":"3"},"events":[{"type":"DELETE","kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","mod_revision":"36"}}]}}es = json_decode(chunk)
+                        log.debug("update ", service_name, " addrs=", value)  
                     end
                 end
             end

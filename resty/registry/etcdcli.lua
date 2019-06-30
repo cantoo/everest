@@ -16,14 +16,12 @@ function _M.new(conf)
     local port = conf.port or 2379
     local prefix = conf.prefix or "/v3beta"
     local timeout = conf.timeout or 5
-    local watch_timeout = conf.watch_timeout or 10
 
     return setmetatable({
         host = host,
         port = port,
         prefix = prefix,
         timeout = timeout,
-        watch_timeout = watch_timeout,
     }, mt)
 end
 
