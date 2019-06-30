@@ -139,12 +139,12 @@ function _M:watch(key, range_end)
     res, err = httpc:request({
         method = "POST",
         path = self.prefix .. "/watch",
-        body = json_decode({
+        body = json_encode({
             create_request = {
                 key = key,
                 range_end = range_end,
             }
-        })
+        }),
     })
 
     if not res then

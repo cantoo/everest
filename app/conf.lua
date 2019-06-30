@@ -8,7 +8,7 @@ local _M = {
 	registry = etcd.new({
 		name = "app",
 		version = 1,
-		ifa = "eno16777736",
+		ifa = "eth0",
 		port = server_port,
 	}),
 

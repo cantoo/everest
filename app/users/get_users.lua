@@ -10,7 +10,6 @@ local _M = {}
 
 function _M.content()
 	local res = users:get("/hello")
-	log.debug(json_encode(res))
 	return res
 end
 

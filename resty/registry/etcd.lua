@@ -62,14 +62,25 @@ function _M.new(conf)
     }, mt)
 end
 
-local function register(_, self)
-    local rand = tonumber(to_hex(random_bytes(4, true)), 16) % #self.clients + 1
+local function _get_registry_key(name, addr, port)
+    return table_concat({registry_path, name, "/", addr, ":", port})
+end
 
-    local addr = self.addr
+local function _get_key_range_end(service_name)
+    local key = table_concat({registry_path, service_name, "/"})
+    local range_end = encode_base64(table_concat({key, "a"}))
+    key = encode_base64(key)
+    return key, range_end
+end
+
+local function register(_, etcd)
+    local rand = tonumber(to_hex(random_bytes(4, true)), 16) % #etcd.clients + 1
+
+    local addr = etcd.addr
     if not addr then
-        _, addr = run_shell("/usr/sbin/ifconfig " .. self.ifa .. " | grep 'inet ' | awk '{print $2}'")
+        _, addr = run_shell("/usr/sbin/ifconfig " .. etcd.ifa .. " | grep 'inet ' | awk '{print $2}'")
         addr = string.gsub(addr, "\n", "")
-        log.debug("ifa=", self.ifa, ",addr=", addr)
+        log.debug("ifa=", etcd.ifa, ",addr=", addr)
     end
 
     if not addr or addr == "" then
@@ -78,25 +89,25 @@ local function register(_, self)
     end
 
     while not exiting() do
-        local client = self.clients[rand]
-        self.client = client
+        local client = etcd.clients[rand]
+        etcd.client = client
 
-        local lease = client:grant(self.timeout + self.ttl)
+        local lease = client:grant(etcd.timeout + etcd.ttl)
 
         if not lease then
-            ngx.sleep(self.ttl)
+            ngx.sleep(etcd.ttl)
         else
-            local key = table_concat({registry_path, self.name, "/", addr, ":", self.port})
+            local key = _get_registry_key(etcd.name, addr, etcd.port)
             local ok = client:put(encode_base64(key), encode_base64(json_encode({
                 addr = addr, 
-                port = self.port,
-                metadata={version = self.version}})), lease)
+                port = etcd.port,
+                metadata={version = etcd.version}})), lease)
             if not ok then
                 client:revoke(lease)
-                ngx.sleep(self.ttl)
+                ngx.sleep(etcd.ttl)
             else
                 while not exiting() do
-                    ngx.sleep(self.ttl)
+                    ngx.sleep(etcd.ttl)
                     ok = client:keepalive(lease) 
                     if not ok then
                         break
@@ -107,7 +118,7 @@ local function register(_, self)
             end
         end
 
-        rand = (rand + 1) % #self.clients + 1
+        rand = (rand + 1) % #etcd.clients + 1
     end
 end 
 
@@ -119,23 +130,17 @@ function _M:init_worker()
     end
 end
 
-local function _get_key_range_end(service_name)
-    local key = table_concat({registry_path, service_name, "/"})
-    local range_end = encode_base64(table_concat({key, "a"}))
-    key = encode_base64(key)
-    return key, range_end
-end
-
 local function _watch(_, etcd, service_name)
-    local addrs, err = registry:get(service_name)
-    if not addrs then
+    local value, err = registry:get(service_name)
+    if not value then
         return err
     end
 
-    addrs = json_decode(addrs)
+    local addrs = json_decode(value)
     if not addrs then
         registry:delete(service_name)
-        return "failed to json decode addrs"
+        log.debug("failed to json decode addrs service_name=" .. service_name, ",value=", value)
+        return
     end
 
     local key, range_end = _get_key_range_end(service_name)
@@ -150,66 +155,59 @@ local function _watch(_, etcd, service_name)
                 chunk, err = reader(8192)
                 if err then 
                     log.error(err)
-                    if not string.find(err, "timeout") then
-                        break
-                    end
+                    break
                 end
 
-                log.debug("service_name=", service_name, ",chunk=", chunk)
+                log.debug("service_name=", service_name, ",chunk=", chunk, ",err=", err)
                 if chunk then
                     local res = json_decode(chunk)
                     if not res then
-                        log.error("failed to decode chunk=", chunk)
-                    else
-                        if type(res.events) == "table" then
-                            for _, event in ipairs(res.events) do
-                                if type(event.kv) == "table" then
-                                    local caddr = json_decode(decode_base64(event.kv.value))
-                                    if not caddr or not caddr.addr or caddr.port then
-                                        log.error("failed to decode or invalid event value=", event.kv.value)
+                        log.error("failed to decode chunk=", chunk, ",service_name=", service_name)
+                        break
+                    end
+
+                    if type(res.result) == "table" and type(res.result.events) == "table" then
+                        for _, event in ipairs(res.result.events) do
+                            if type(event.kv) == "table" and type(event.kv.key) == "string" then
+                                local registry_key = decode_base64(event.kv.key)
+                                local i = 1
+                                while i <= #addrs do
+                                    if registry_key == _get_registry_key(service_name, addrs[i].addr, addrs[i].port) then
+                                        break
+                                    end
+                                    
+                                    i = i + 1
+                                end
+
+                                if event.type == "DELETE" then
+                                    if i <= #addrs then
+                                        table_remove(addrs, i)
+                                    end
+                                else
+                                    value = json_decode(decode_base64(event.kv.value))
+                                    if not value or type(value.addr) ~= "string" or type(value.port) ~= "number" then
+                                        log.error("failed to decode event value=", event.kv.value, ",service_name=", service_name)
                                     else
-                                        if event.type == "PUT" or event.kv.version == "1" then
-                                            local i = 1
-                                            while i <= #addrs do
-                                                if caddr.addr == addrs[i].addr and caddr.port == addrs[i].port then
-                                                    break
-                                                end
-                                                
-                                                i = i + 1
-                                            end
-
-                                            addrs[i] = caddr
-                                        elseif event.type == "DELETE" then
-                                            local i = 1
-                                            while i <= #addrs do
-                                                if caddr == addrs[i].addr and caddr.port == addrs[i].port then
-                                                    break
-                                                end
-                                                
-                                                i = i + 1
-                                            end
-
-                                            table_remove(addrs, i)
+                                        if i <= #addrs then
+                                            addrs[i] = value
+                                        else
+                                            table_insert(addrs, value)
                                         end
                                     end
                                 end
                             end
-
-                            if #addrs == 0 then
-                                registry:delete(service_name)
-                                httpc:close()
-                                return
-                            else
-                                registry:set(service_name, json_encode(addrs))
-                            end
                         end
+
+                        value = json_encode(addrs)
+                        registry:set(service_name, value)
+                        log.debug("update ", service_name, " addrs=", value)                        
+
+                        -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"34","raft_term":"3"},"created":true}}
+
+                        -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"35","raft_term":"3"},"events":[{"kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","create_revision":"35","mod_revision":"35","version":"1","value":"eyJBZGRyIjoiNC4zLjIuMTo4ODg4In0=","lease":"7587839221445806083"}}]}}
+
+                        -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"36","raft_term":"3"},"events":[{"type":"DELETE","kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","mod_revision":"36"}}]}}es = json_decode(chunk)
                     end
-
-                    -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"34","raft_term":"3"},"created":true}}
-
-                    -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"35","raft_term":"3"},"events":[{"kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","create_revision":"35","mod_revision":"35","version":"1","value":"eyJBZGRyIjoiNC4zLjIuMTo4ODg4In0=","lease":"7587839221445806083"}}]}}
-
-                    -- {"result":{"header":{"cluster_id":"14841639068965178418","member_id":"10276657743932975437","revision":"36","raft_term":"3"},"events":[{"type":"DELETE","kv":{"key":"c2VydmljZXMvNC4zLjIuMQ==","mod_revision":"36"}}]}}es = json_decode(chunk)
                 end
             end
         end
@@ -268,16 +266,21 @@ function _M:prepare(service_name)
     end
 
     if #addrs == 0 then 
+        log.debug("no addrs of " .. service_name)
         lock:unlock()
         return false, nil
     end
 
     local ok
-    ok, err = registry:set(service_name, json_encode(addrs))
+    local value = json_encode(addrs)
+    ok, err = registry:set(service_name, value)
     if not ok then
+        log.error(err)
         lock:unlock()
         return false, err
     end
+
+    log.debug("service_name=", service_name, "addrs=", value)
 
     -- 开始监听
     ok, err = ngx_timer_at(0, _watch, self, service_name)
