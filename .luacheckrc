@@ -1,3 +1,4 @@
 std = "ngx_lua"
-ignore = { "61.", "631" }
+ignore = { "631", "61." }
 globals = { "ngx" }
+redefined = false

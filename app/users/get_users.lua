@@ -1,8 +1,4 @@
-local cjson = require("cjson.safe")
-local log = require("resty.log")
 local conf = require("conf")
-
-local json_encode = cjson.encode 
 
 local users = conf.users
 

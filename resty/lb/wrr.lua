@@ -16,5 +16,8 @@ function _M:balancer()
     end
 end
 
+function _M:log() 
+end
+
 return _M
 

@@ -55,7 +55,7 @@ function _M:set_keepalive(red)
     red:set_keepalive(self.max_idle_timeout, self.pool_size)
 end
 
-function _M:array_to_hash(array)
+function _M.array_to_hash(array)
     return redis:array_to_hash(array)
 end
 
