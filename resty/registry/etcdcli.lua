@@ -34,9 +34,8 @@ local function _request_uri(etcdcli, cmd, body)
     httpc:set_timeout(etcdcli.timeout * 1000)
     local request_body = json_encode(body)
 
-    local res
     local uri = table_concat({"http://", etcdcli.host, ":", etcdcli.port, etcdcli.prefix, cmd})
-    res, err = httpc:request_uri(uri, {
+    local res, err = httpc:request_uri(uri, {
         method = "POST",    
         body = request_body,
     })
@@ -133,8 +132,7 @@ function _M:watch(key, range_end)
         return nil, nil, err
     end
 
-    local res
-    res, err = httpc:request({
+    local res, err = httpc:request({
         method = "POST",
         path = self.prefix .. "/watch",
         body = json_encode({

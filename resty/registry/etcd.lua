@@ -4,7 +4,7 @@ local resty_string = require("resty.string")
 local resty_random = require("resty.random")
 local resty_lock = require("resty.lock")
 local log = require("resty.log")
-local shell = require "resty.shell"
+local shell = require("resty.shell")
 
 local run_shell = shell.run
 local new_tab = table.new
@@ -29,6 +29,7 @@ local _M = {}
 local mt = { __index = _M }
 
 function _M.new(conf)
+    conf = conf or {}
     local hosts = conf.hosts or { { host = "127.0.0.1", port = 2379 } }
     local prefix = conf.prefix
     local timeout = conf.timeout or 5
@@ -151,8 +152,7 @@ local function _watch(_, etcd, service_name)
             ngx.sleep(etcd.timeout)
         else
             while not exiting() do
-                local chunk
-                chunk, err = reader()
+                local chunk, err = reader()
                 if err then 
                     log.error(err)
                     break
@@ -219,18 +219,17 @@ function _M:prepare(service_name)
     end
 
     if err then
+        log.error(err)
         return false, err
     end
 
-    local lock
-    lock, err = resty_lock:new(registry_lock)
+    local lock, err = resty_lock:new(registry_lock)
     if not lock then
         log.error(err)
         return false, err
     end
 
-    local elapsed
-    elapsed, err = lock:lock(service_name)
+    local elapsed, err = lock:lock(service_name)
     if not elapsed then
         log.error(err)
         return false, err
@@ -245,6 +244,7 @@ function _M:prepare(service_name)
     local key, range_end = _get_key_range_end(service_name)
     local kvs = self.client:range(key, range_end)
     if not kvs then
+        log.debug("range no result " .. service_name)
         lock:unlock()
         return false, nil
     end
@@ -267,16 +267,15 @@ function _M:prepare(service_name)
         return false, nil
     end
 
-    local ok
     local value = json_encode(addrs)
-    ok, err = registry:set(service_name, value)
+    local ok, err = registry:set(service_name, value)
     if not ok then
         log.error(err)
         lock:unlock()
         return false, err
     end
 
-    log.debug("service_name=", service_name, "addrs=", value)
+    log.debug("service_name=", service_name, ",addrs=", value)
 
     -- 开始监听
     ok, err = ngx_timer_at(0, _watch, self, service_name)
@@ -285,6 +284,7 @@ function _M:prepare(service_name)
     end
 
     lock:unlock()
+    ngx.ctx.service_name = service_name
     return true, nil
 end
 

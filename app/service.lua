@@ -9,7 +9,7 @@ local _M = {
 	registry = etcd.new({
 		name = "app",
 		version = 1,
-		ifa = "eth0",
+		ifa = "eno16777736",
 		port = server_port,
 	}),
 
@@ -19,5 +19,9 @@ local _M = {
 	-- rpc clients
 	users = location.new("/_rpc_app_", server_port)
 }
+
+function _M.init_worker()
+	_M.registry:init_worker()
+end
 
 return _M

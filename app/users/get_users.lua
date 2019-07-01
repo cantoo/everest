@@ -1,6 +1,6 @@
-local conf = require("conf")
+local service = require("service")
 
-local users = conf.users
+local users = service.users
 
 local _M = {}
 
